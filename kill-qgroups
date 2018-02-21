@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Kill the btrfs qgroups on the provided directory
+
+if [ $# -ne 1 ]; then
+    echo "Synopsis: $0 <directory>" > /dev/stderr
+    exit 1;
+fi
+
+if [ "$EUID" -ne 0 ]; then
+    echo "ERROR: This must be run as root" > /dev/stderr
+    exit 1;
+fi
+
+dir=$1
+if [ ! -d "${dir}" ]; then
+    echo "ERROR: Directory does not exist: $dir" > /dev/stderr
+    exit 1;
+fi
+
+while [ true ]; do
+    echo -n "$(date '+%Y-%m-%d %H:%M:%S') "
+    btrfs qgroup show "${dir}" >& /dev/null
+    if [ $? -eq 0 ]; then
+        echo Killing off cgroups on "${dir}"
+        for f in $(btrfs qgroup show "${dir}" | cut -f 1 -d ' ' | grep '^[0-9]'); do
+            btrfs qgroup destroy $f "${dir}"
+        done;
+        btrfs quota disable "${dir}"
+    else
+        echo Nothing to do
+    fi
+
+    sleep 5
+done
+
