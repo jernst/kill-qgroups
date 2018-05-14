@@ -22,7 +22,7 @@ while [ true ]; do
     echo -n "$(date '+%Y-%m-%d %H:%M:%S') "
     btrfs qgroup show "${dir}" >& /dev/null
     if [ $? -eq 0 ]; then
-        echo Killing off cgroups on "${dir}"
+        echo Killing off qgroups on "${dir}"
         for f in $(btrfs qgroup show "${dir}" | cut -f 1 -d ' ' | grep '^[0-9]'); do
             btrfs qgroup destroy $f "${dir}"
         done;
